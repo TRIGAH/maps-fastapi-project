@@ -55,7 +55,7 @@ def update_post(id: int, post: PostRequest, db: session  = Depends(get_db), curr
     if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id: {id} does not exist")
 
-    if post_query.owner_id != current_user.id:
+    if updated_post.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Not authorized to perform requested action")      
 
     post_query.update(post.dict(), synchronize_session=False)    
