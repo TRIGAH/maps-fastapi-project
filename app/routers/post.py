@@ -3,13 +3,13 @@ from .. import models,oauth2
 from ..database import engine,get_db
 from sqlalchemy.orm import session
 from ..schemas import PostRequest,PostRespone
-
+from typing import List,Optional
 router = APIRouter(tags=["Posts"])
 
-@router.get("/posts")
-def get_posts(db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
+@router.get("/posts",response_model=List[PostRespone])
+def get_posts(db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user),limit : int =2 ,skip : int =2, search : Optional[str]=""):
     # cursor.execute(""" SELECT * FROM posts """)
-    posts=db.query(models.Post).all()
+    posts=db.query(models.Post).filter(models.Post.title.contains(search)).all()
     return posts
 
 @router.post("/posts",status_code=status.HTTP_201_CREATED,response_model=PostRespone)
@@ -27,6 +27,10 @@ def get_post(id: int, response: Response, db: session  = Depends(get_db), curren
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id {id} not found")  
+
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Not authorized to perform requested action")  
+                 
     return post
 
 
