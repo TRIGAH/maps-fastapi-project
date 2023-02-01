@@ -2,15 +2,18 @@ from fastapi import FastAPI,Response,status,HTTPException,Depends,APIRouter
 from .. import models,oauth2
 from ..database import engine,get_db
 from sqlalchemy.orm import session
-from ..schemas import PostRequest,PostRespone
+from ..schemas import PostRequest,PostRespone,PostVotes
 from typing import List,Optional
+from sqlalchemy import func
 router = APIRouter(tags=["Posts"])
 
-@router.get("/posts",response_model=List[PostRespone])
+@router.get("/posts",response_model=List[PostVotes])
 def get_posts(db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user),limit : int =2 ,skip : int =2, search : Optional[str]=""):
     # cursor.execute(""" SELECT * FROM posts """)
     posts=db.query(models.Post).filter(models.Post.title.contains(search)).all()
-    return posts
+
+    results = db.query(models.Post,func.count(models.Vote.post_id).label("votes")).join(models.Vote,models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).all()
+    return results
 
 @router.post("/posts",status_code=status.HTTP_201_CREATED,response_model=PostRespone)
 def create_posts(post: PostRequest, db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
