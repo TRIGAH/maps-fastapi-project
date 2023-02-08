@@ -26,16 +26,20 @@ def create_posts(post: PostRequest, db: session  = Depends(get_db), current_user
     db.refresh(new_post)
     return new_post     
 
-@router.get("/posts/{id}",response_model=PostRespone)
+@router.get("/posts/{id}",response_model=PostVotes)
 def get_post(id: int, response: Response, db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)): 
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
 
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    # post = db.query(models.Post).filter(models.Post.id == id).first()
+
+    post = db.query(models.Post,func.count(models.Vote.post_id).label("votes"))\
+    .join(models.Vote,models.Vote.post_id == models.Post.id, isouter=True)\
+    .group_by(models.Post.id).filter(models.Post.id == id).first()
     if not post:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id {id} not found")  
 
-    if post.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Not authorized to perform requested action")  
+    # if post.owner_id != current_user.id:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Not authorized to perform requested action")  
                  
     return post
 
@@ -43,7 +47,7 @@ def get_post(id: int, response: Response, db: session  = Depends(get_db), curren
 @router.delete("/posts/{id}",status_code=status.HTTP_204_NO_CONTENT)    
 def delete_post(id: int,db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)):
     # cursor.execute(""" DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
-    
+
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
 
