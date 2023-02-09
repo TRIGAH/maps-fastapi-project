@@ -7,11 +7,25 @@ from .database import engine,get_db
 from sqlalchemy.orm import session
 from .schemas import PostRequest,PostRespone,UserRequest,UserResponse
 from .routers import post,user,auth,vote
+from fastapi.middleware.cors import CORSMiddleware
 
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 my_posts=[{"title":"My Year of Milking","content":"I will milk it","id":1},{"title":"ON GOD","content":"Only God can say NO","id":2}]
 
