@@ -29,7 +29,6 @@ def create_posts(post: PostRequest, db: session  = Depends(get_db), current_user
 @router.get("/posts/{id}",response_model=PostVotes)
 def get_post(id: int, response: Response, db: session  = Depends(get_db), current_user : int = Depends(oauth2.get_current_user)): 
     # cursor.execute(""" SELECT * FROM posts WHERE id = %s """, (str(id),))
-
     # post = db.query(models.Post).filter(models.Post.id == id).first()
 
     post = db.query(models.Post,func.count(models.Vote.post_id).label("votes"))\
