@@ -1,19 +1,8 @@
 from app import schemas
-from tests.database import client,session
 import pytest
-
-@pytest.fixture
-def test_user(client):
-    user_data = {"email":"maps@gmail.com","password":"maps"}
-    res=client.post("/users/",json=user_data)
-    assert res.status_code == 201
-    print (res.json())
-    new_user = res.json()
-    new_user["password"]=user_data["password"]
-    return new_user
-
-
-
+import json
+from app.oauth2 import settings,SECRET_KEY,ALGORITHM
+from jose import JWTError,jwt
 
 def test_root(client):
     res = client.get("/")
@@ -30,4 +19,9 @@ def test_create_user(client):
 
 def test_login_user(client,test_user):
     res = client.post("/login",data={"username":test_user["email"],"password":test_user["password"]})  
+    login_res = schemas.Token(**res.json())
+    payload = jwt.decode(login_res.access_token,SECRET_KEY, algorithms=[ALGORITHM])    
+    id = payload.get("user_id")
+    assert id == test_user['id']
+    assert login_res.token_type == 'bearer'
     assert res.status_code == 200  
