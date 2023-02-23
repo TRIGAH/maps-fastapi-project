@@ -13,7 +13,7 @@ def get_posts(db: session  = Depends(get_db), current_user : int = Depends(oauth
 
     posts = db.query(models.Post,func.count(models.Vote.post_id).label("votes"))\
     .join(models.Vote,models.Vote.post_id == models.Post.id, isouter=True)\
-    .group_by(models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    .group_by(models.Post.id).filter(models.Post.title.contains(search)).all()
     return posts
 
 @router.post("/posts",status_code=status.HTTP_201_CREATED,response_model=PostRespone)

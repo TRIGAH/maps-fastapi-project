@@ -8,6 +8,7 @@ from app.config import settings
 from app.database import engine,get_db
 from app.database import Base
 from app.oauth2 import create_access_token
+from app import models
 import pytest
 SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/fastapi_test'
 # SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}'
@@ -58,3 +59,33 @@ def authorized_client(client,token):
         "Authorization":f"Bearer {token}"
     }    
     return client
+
+@pytest.fixture
+def test_posts(test_user,session):
+    post_data = [
+        {
+            "title":"First Title",
+            "content":"First Content",
+            "owner_id":test_user["id"]
+        },
+        {
+            "title":"Second Title",
+            "content":"Second Content",
+            "owner_id":test_user["id"]
+        },
+        {
+            "title":"Third Title",
+            "content":"Third Content",
+            "owner_id":test_user["id"]
+        },
+    ]    
+
+    def create_post_model(post):
+        return models.Post(**post)
+
+    post_map = map(create_post_model,post_data)  
+    posts = list(post_map)   
+    session.add_all(posts)
+    session.commit()
+    posts=session.query(models.Post).all()
+    return posts
