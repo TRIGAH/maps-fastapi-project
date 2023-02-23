@@ -7,8 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.database import engine,get_db
 from app.database import Base
+from app.oauth2 import create_access_token
 import pytest
-
 SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/fastapi_test'
 # SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}'
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -46,3 +46,15 @@ def test_user(client):
     new_user = res.json()
     new_user["password"]=user_data["password"]
     return new_user
+
+@pytest.fixture
+def token(test_user):   
+    return create_access_token({"user_id":test_user["id"]}) 
+
+@pytest.fixture
+def authorized_client(client,token):
+    client.headers = {
+        **client.headers,
+        "Authorization":f"Bearer {token}"
+    }    
+    return client
