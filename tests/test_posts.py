@@ -26,7 +26,6 @@ def test_get_post_not_exist(authorized_client,test_posts):
 def test_authorized_user_get_post(authorized_client,test_posts):
     res = authorized_client.get(f"/posts/{test_posts[0].id}")   
     post = schemas.PostVotes(**res.json())
-    print(post)
     assert post.Post.id == test_posts[0].id
 
 @pytest.mark.parametrize("title,content,published",[
@@ -56,3 +55,19 @@ def test_create_post_published_is_true(authorized_client,test_user,test_posts):
 def test_unauthorized_user_create_post(client,test_user,test_posts):    
     res = client.post("/posts/",json={"title":"The Title","content":"The Content"})
     assert res.status_code == 401
+
+def test_unauthorized_user_delete_post(client,test_user,test_posts):    
+    res = client.delete(f"/posts/{test_posts[0].id}")
+    assert res.status_code == 401
+
+def test_authorized_user_delete_post_success(authorized_client,test_user,test_posts):    
+    res = authorized_client.delete(f"/posts/{test_posts[0].id}")
+    assert res.status_code == 204
+
+def test_delete_post_non_exist(authorized_client,test_user,test_posts):    
+    res = authorized_client.delete(f"/posts/9999")
+    assert res.status_code == 404
+
+def test_delete_other_user_post(authorized_client,test_user,test_posts):    
+    res = authorized_client.delete(f"/posts/{test_posts[3].id}")
+    assert res.status_code == 403
